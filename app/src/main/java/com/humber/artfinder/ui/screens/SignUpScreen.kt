@@ -26,7 +26,8 @@ fun SignUpScreen(
     LaunchedEffect(authState) {
         if (authState is AuthState.Success) {
             // After successful auth, create the profile in Firestore
-            userVM.updateProfile(displayName = name, email = email, avatarUrl = userVM.prebuiltAvatars.first())
+            val uid = authVM.currentUser?.uid ?: ""
+            userVM.createInitialProfile(uid = uid, email = email, displayName = name)
             onSignUpSuccess()
         }
     }

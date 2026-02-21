@@ -59,6 +59,25 @@ class UserViewModel(
         }
     }
 
+    fun createInitialProfile(uid: String, email: String, displayName: String) {
+        _userState.value = UserState.Loading
+        viewModelScope.launch {
+            val profile = UserProfile(
+                uid = uid,
+                email = email,
+                displayName = displayName,
+                profileImageUrl = prebuiltAvatars.first()
+            )
+            val result = userRepo.createUserProfile(profile)
+            if (result.isSuccess) {
+                _userProfile.value = profile
+                _userState.value = UserState.Success
+            } else {
+                _userState.value = UserState.Error("Failed to create profile in Firestore.")
+            }
+        }
+    }
+
     fun updateProfile(displayName: String, email: String, avatarUrl: String) {
         val currentProfile = _userProfile.value ?: return
         val uid = authRepo.currentUser?.uid ?: return

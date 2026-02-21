@@ -91,5 +91,12 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     implementation("com.google.maps.android:maps-compose:2.11.4")
 
+    // API & Networking
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp.logging)
 
+    // Image Loading
+    implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
 }

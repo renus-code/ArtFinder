@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +30,7 @@ import com.humber.artfinder.ui.viewmodel.UserViewModel
 @Composable
 fun ProfileScreen(
     userVM: UserViewModel,
+    onNavigateToVisitedList: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val userProfile by userVM.userProfile
@@ -193,6 +195,17 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Edit Profile")
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedButton(
+                        onClick = onNavigateToVisitedList,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("View Visited Artworks")
                     }
                 }
 

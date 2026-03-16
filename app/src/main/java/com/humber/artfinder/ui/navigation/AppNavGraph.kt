@@ -39,7 +39,8 @@ fun AppNavGraph(
                 viewModel = authVM,
                 onNavigateToSignUp = { navController.navigate("signup") },
                 onLoginSuccess = { 
-                    userVM.fetchProfile() // Fetch profile on successful login
+                    userVM.fetchProfile()
+                    userVM.fetchVisitedArtworks()
                     navController.navigate("art_list") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -64,7 +65,7 @@ fun AppNavGraph(
             ArtListScreen(
                 authVM = authVM,
                 artVM = artVM,
-                userVM = userVM, // Pass userVM to ArtListScreen
+                userVM = userVM,
                 onNavigateToDetails = { id -> navController.navigate("art_details/$id") },
                 onNavigateToProfile = { navController.navigate("profile") },
                 onSignOut = {
@@ -80,6 +81,15 @@ fun AppNavGraph(
         composable("profile") {
             ProfileScreen(
                 userVM = userVM,
+                onNavigateToVisitedList = { navController.navigate("visited_list") },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable("visited_list") {
+            VisitedArtListScreen(
+                userVM = userVM,
+                onNavigateToDetails = { id -> navController.navigate("art_details/$id") },
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -92,6 +102,7 @@ fun AppNavGraph(
             ArtDetailScreen(
                 artworkId = artworkId,
                 artVM = artVM,
+                userVM = userVM,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

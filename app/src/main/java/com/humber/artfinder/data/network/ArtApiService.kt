@@ -11,7 +11,7 @@ interface ArtApiService {
     suspend fun getArtworks(
         @Query("page") page: Int,
         @Query("limit") limit: Int = 20,
-        @Query("fields") fields: String = "id,title,artist_display,artist_title,image_id,is_public_domain,artwork_type_title,date_display,place_of_origin,medium_display,dimensions,gallery_title,department_title,short_description"
+        @Query("fields") fields: String = "id,title,artist_display,artist_title,image_id,is_public_domain,artwork_type_title,date_display,place_of_origin,medium_display,dimensions,gallery_title,department_title,short_description,latitude,longitude"
     ): ArtworkResponse
 
     @GET("artworks/search?query[term][is_public_domain]=true")
@@ -19,7 +19,7 @@ interface ArtApiService {
         @Query("q") query: String,
         @Query("page") page: Int,
         @Query("limit") limit: Int = 20,
-        @Query("fields") fields: String = "id,title,artist_display,artist_title,image_id,is_public_domain,artwork_type_title,date_display,place_of_origin,medium_display,dimensions,gallery_title,department_title,short_description"
+        @Query("fields") fields: String = "id,title,artist_display,artist_title,image_id,is_public_domain,artwork_type_title,date_display,place_of_origin,medium_display,dimensions,gallery_title,department_title,short_description,latitude,longitude"
     ): ArtworkResponse
 
     companion object {

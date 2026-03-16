@@ -2,17 +2,22 @@
 
 package com.humber.artfinder.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,7 +32,7 @@ import com.humber.artfinder.ui.viewmodel.UserViewModel
 fun ArtListScreen(
     authVM: AuthViewModel,
     artVM: ArtViewModel,
-    userVM: UserViewModel, // Added userVM
+    userVM: UserViewModel,
     onNavigateToDetails: (Int) -> Unit,
     onNavigateToProfile: () -> Unit,
     onSignOut: () -> Unit
@@ -46,7 +51,7 @@ fun ArtListScreen(
                     }
                     TextButton(onClick = { 
                         authVM.signOut()
-                        userVM.clearProfile() // Also clear profile data
+                        userVM.clearProfile()
                         onSignOut()
                     }) {
                         Text("Sign Out")
@@ -92,7 +97,12 @@ fun ArtListScreen(
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 items(state.artworks) { artwork ->
-                                    ArtworkListItem(artwork, onClick = { onNavigateToDetails(artwork.id) })
+                                    val isVisited = userVM.isVisited(artwork.id)
+                                    ArtworkListItem(
+                                        artwork = artwork,
+                                        isVisited = isVisited,
+                                        onClick = { onNavigateToDetails(artwork.id) }
+                                    )
                                 }
                             }
                         }
@@ -143,7 +153,11 @@ fun ArtListScreen(
 }
 
 @Composable
-fun ArtworkListItem(artwork: Artwork, onClick: () -> Unit) {
+fun ArtworkListItem(
+    artwork: Artwork,
+    isVisited: Boolean,
+    onClick: () -> Unit
+) {
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -155,14 +169,30 @@ fun ArtworkListItem(artwork: Artwork, onClick: () -> Unit) {
                 .height(100.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = "https://www.artic.edu/iiif/2/${artwork.imageId}/full/200,/0/default.jpg",
-                contentDescription = artwork.title,
-                modifier = Modifier
-                    .size(100.dp)
-                    .padding(4.dp),
-                contentScale = ContentScale.Crop
-            )
+            Box {
+                AsyncImage(
+                    model = "https://www.artic.edu/iiif/2/${artwork.imageId}/full/200,/0/default.jpg",
+                    contentDescription = artwork.title,
+                    modifier = Modifier
+                        .size(100.dp)
+                        .padding(4.dp),
+                    contentScale = ContentScale.Crop
+                )
+                
+                if (isVisited) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Visited",
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(2.dp)
+                            .background(Color.White, CircleShape)
+                            .clip(CircleShape)
+                            .size(20.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -178,11 +208,26 @@ fun ArtworkListItem(artwork: Artwork, onClick: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.secondary
                 )
-                Text(
-                    text = artwork.artworkType ?: "",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = artwork.artworkType ?: "",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                    
+                    if (isVisited) {
+                        Text(
+                            text = "Visited",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF4CAF50),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }

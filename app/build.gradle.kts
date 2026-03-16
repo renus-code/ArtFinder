@@ -99,4 +99,7 @@ dependencies {
     // Image Loading
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)
+
+    // Permissions
+    implementation(libs.accompanist.permissions)
 }

@@ -11,5 +11,6 @@ data class VisitedArtwork(
     val longitude: Double? = null,
     val visitedAt: Timestamp = Timestamp.now(),
     val artworkType: String? = null,
-    val mediumDisplay: String? = null
+    val mediumDisplay: String? = null,
+    val photos: List<String> = emptyList() // Added for Milestone 3
 )

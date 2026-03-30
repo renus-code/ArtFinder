@@ -11,11 +11,7 @@ plugins {
 
 android {
     namespace = "com.humber.artfinder"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.humber.artfinder"
@@ -78,18 +74,19 @@ dependencies {
 
 
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-storage")
 
     // Navigation & Icons
-    implementation("androidx.navigation:navigation-compose:2.9.6")
-    implementation("androidx.compose.material:material-icons-extended:1.7.0") // Note: specify a version
+    implementation("androidx.navigation:navigation-compose:2.8.6")
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Location & Maps
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("com.google.android.gms:play-services-maps:19.0.0")
-    implementation("com.google.maps.android:maps-compose:2.11.4")
+    implementation("com.google.maps.android:maps-compose:6.4.1")
 
     // API & Networking
     implementation(libs.retrofit)

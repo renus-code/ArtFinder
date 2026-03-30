@@ -3,36 +3,51 @@
 package com.humber.artfinder.ui.screens
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Directions
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import com.humber.artfinder.data.model.Artwork
+import com.humber.artfinder.data.model.VisitedArtwork
 import com.humber.artfinder.ui.viewmodel.ArtState
 import com.humber.artfinder.ui.viewmodel.ArtViewModel
 import com.humber.artfinder.ui.viewmodel.UserViewModel
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -50,39 +65,62 @@ fun ArtDetailScreen(
         artState.artworks.find { it.id == artworkId }
     } else null
 
-    if (artwork == null) {
-        val visited = userVM.getVisitedArtworkById(artworkId)
-        if (visited != null) {
-            artwork = Artwork(
-                id = visited.id,
-                title = visited.title,
-                artistDisplay = visited.artistDisplay,
-                imageId = visited.imageId,
-                isPublicDomain = true,
-                artworkType = visited.artworkType,
-                placeOfOrigin = null,
-                dimensions = null,
-                mediumDisplay = visited.mediumDisplay,
-                galleryTitle = null,
-                isOnView = false,
-                dateDisplay = null,
-                shortDescription = null,
-                latitude = visited.latitude,
-                longitude = visited.longitude,
-                departmentTitle = null,
-                artistTitle = null
-            )
-        }
+    var visitedArtworkInfo by remember { mutableStateOf<VisitedArtwork?>(null) }
+    
+    LaunchedEffect(userVM.visitedArtworks.value) {
+        visitedArtworkInfo = userVM.getVisitedArtworkById(artworkId)
+    }
+
+    if (artwork == null && visitedArtworkInfo != null) {
+        val visited = visitedArtworkInfo!!
+        artwork = Artwork(
+            id = visited.id,
+            title = visited.title,
+            artistDisplay = visited.artistDisplay,
+            imageId = visited.imageId,
+            isPublicDomain = true,
+            artworkType = visited.artworkType,
+            placeOfOrigin = null,
+            dimensions = null,
+            mediumDisplay = visited.mediumDisplay,
+            galleryTitle = null,
+            isOnView = false,
+            dateDisplay = null,
+            shortDescription = null,
+            latitude = visited.latitude,
+            longitude = visited.longitude,
+            departmentTitle = null,
+            artistTitle = null
+        )
     }
 
     val isVisited = userVM.isVisited(artworkId)
 
-    val locationPermissionState = rememberMultiplePermissionsState(
+    // Permissions for Camera and Location
+    val permissionsState = rememberMultiplePermissionsState(
         listOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.CAMERA
         )
     )
+
+    // Camera URI logic
+    var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { userVM.uploadPhoto(artworkId, it) }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempPhotoUri != null) {
+            userVM.uploadPhoto(artworkId, tempPhotoUri!!)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -133,6 +171,64 @@ fun ArtDetailScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    // Milestone 3: Photo Upload Section (Only if visited)
+                    if (isVisited) {
+                        Text(text = "My Photos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { 
+                                    if (permissionsState.permissions.find { it.permission == Manifest.permission.CAMERA }?.status?.isGranted == true) {
+                                        val uri = createTempPictureUri(context)
+                                        tempPhotoUri = uri
+                                        cameraLauncher.launch(uri)
+                                    } else {
+                                        permissionsState.launchMultiplePermissionRequest()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.AddAPhoto, contentDescription = null)
+                                Spacer(Modifier.width(4.dp))
+                                Text("Add Photo")
+                            }
+                            
+                            OutlinedButton(
+                                onClick = { galleryLauncher.launch("image/*") },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.PhotoLibrary, contentDescription = null)
+                                Spacer(Modifier.width(4.dp))
+                                Text("Gallery")
+                            }
+                        }
+                        
+                        visitedArtworkInfo?.photos?.let { photos ->
+                            if (photos.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                LazyRow(
+                                    contentPadding = PaddingValues(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.height(120.dp)
+                                ) {
+                                    items(photos) { photoUrl ->
+                                        AsyncImage(
+                                            model = photoUrl,
+                                            contentDescription = "User Photo",
+                                            modifier = Modifier
+                                                .size(120.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                    }
                     
                     Text(text = "Artist", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     Text(text = artwork.artistDisplay ?: "Unknown Artist", style = MaterialTheme.typography.bodyLarge)
@@ -151,7 +247,6 @@ fun ArtDetailScreen(
                     ) {
                         Text(text = "Location", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         
-                        // Added "Get Directions" button to match Professor's mention of inbuilt Google Maps
                         Button(
                             onClick = {
                                 val lat = artwork!!.latitude ?: 41.8796
@@ -170,7 +265,6 @@ fun ArtDetailScreen(
                         }
                     }
 
-                    // Professor's requirement: Handling null coordinates gracefully
                     val displayLat = artwork.latitude ?: 41.8796
                     val displayLng = artwork.longitude ?: -87.6237
                     val artworkLocation = LatLng(displayLat, displayLng)
@@ -190,7 +284,7 @@ fun ArtDetailScreen(
                     }
 
                     LaunchedEffect(Unit) {
-                        locationPermissionState.launchMultiplePermissionRequest()
+                        permissionsState.launchMultiplePermissionRequest()
                     }
 
                     Box(modifier = Modifier.fillMaxWidth().height(250.dp)) {
@@ -198,7 +292,7 @@ fun ArtDetailScreen(
                             modifier = Modifier.fillMaxSize(),
                             cameraPositionState = cameraPositionState,
                             properties = MapProperties(
-                                isMyLocationEnabled = locationPermissionState.allPermissionsGranted
+                                isMyLocationEnabled = permissionsState.permissions.any { it.permission.startsWith("android.permission.ACCESS") && it.status.isGranted }
                             ),
                             uiSettings = MapUiSettings(
                                 myLocationButtonEnabled = true,
@@ -226,6 +320,22 @@ fun ArtDetailScreen(
             }
         }
     }
+}
+
+private fun createTempPictureUri(
+    context: Context,
+    providerAuthority: String = "com.humber.artfinder.fileprovider"
+): Uri {
+    val tempFile = File.createTempFile(
+        "ART_PHOTO_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}_",
+        ".jpg",
+        context.externalCacheDir
+    ).apply {
+        createNewFile()
+        deleteOnExit()
+    }
+
+    return FileProvider.getUriForFile(context, providerAuthority, tempFile)
 }
 
 @Composable

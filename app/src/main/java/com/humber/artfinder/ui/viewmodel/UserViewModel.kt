@@ -1,5 +1,6 @@
 package com.humber.artfinder.ui.viewmodel
 
+import android.net.Uri
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -58,37 +59,15 @@ class UserViewModel(
         viewModelScope.launch {
             val result = userRepo.getUserProfile(uid)
             if (result.isSuccess) {
-                _userProfile.value = result.getOrNull()
+                val profile = result.getOrNull()
+                _userProfile.value = profile
+                
+                // Recalculate badge based on points whenever profile is fetched
+                profile?.let { updateBadgesBasedOnPoints(uid, it.points) }
+                
                 _userState.value = UserState.Success
             } else {
                 _userState.value = UserState.Error("Failed to fetch profile.")
-            }
-        }
-    }
-
-    fun createInitialProfile(uid: String, email: String, displayName: String) {
-        _userState.value = UserState.Loading
-        viewModelScope.launch {
-            val profile = UserProfile(uid = uid, email = email, displayName = displayName, profileImageUrl = prebuiltAvatars.first())
-            val result = userRepo.createUserProfile(profile)
-            if (result.isSuccess) {
-                _userProfile.value = profile
-                _userState.value = UserState.Success
-            }
-        }
-    }
-
-    fun updateProfile(displayName: String, email: String, avatarUrl: String) {
-        val currentProfile = _userProfile.value ?: return
-        _userState.value = UserState.Loading
-        viewModelScope.launch {
-            if (email != currentProfile.email) {
-                authRepo.updateEmail(email)
-            }
-            val updatedProfile = currentProfile.copy(displayName = displayName, email = email, profileImageUrl = avatarUrl)
-            if (userRepo.updateUserProfile(updatedProfile).isSuccess) {
-                _userProfile.value = updatedProfile
-                _userState.value = UserState.Success
             }
         }
     }
@@ -116,8 +95,52 @@ class UserViewModel(
                     visitedAt = Timestamp.now(), artworkType = artwork.artworkType, mediumDisplay = artwork.mediumDisplay
                 )
                 userRepo.addVisitedArtwork(uid, visited)
+                
+                // Milestone 3: Points for visiting are handled by professor's photo logic instead
+                // but we keep some base points if desired. Requirement focuses on photos.
             }
             fetchVisitedArtworks()
+        }
+    }
+
+    fun uploadPhoto(artworkId: Int, imageUri: Uri) {
+        val uid = authRepo.currentUser?.uid ?: return
+        _userState.value = UserState.Loading
+        viewModelScope.launch {
+            val uploadResult = userRepo.uploadArtworkPhoto(uid, artworkId, imageUri)
+            if (uploadResult.isSuccess) {
+                val updatedVisited = userRepo.getVisitedArtworks(uid).getOrNull()
+                val artwork = updatedVisited?.find { it.id == artworkId }
+                
+                artwork?.let {
+                    val photoCount = it.photos.size
+                    // Point Logic: 1-5 photos -> 10 pts, 6-10 photos -> 20 pts total
+                    if (photoCount == 1) {
+                        userRepo.addPoints(uid, 10)
+                    } else if (photoCount == 6) {
+                        userRepo.addPoints(uid, 10) // Total becomes 20
+                    }
+                }
+                
+                fetchProfile()
+                fetchVisitedArtworks()
+                _userState.value = UserState.Success
+            } else {
+                _userState.value = UserState.Error("Upload failed.")
+            }
+        }
+    }
+
+    private fun updateBadgesBasedOnPoints(uid: String, totalPoints: Int) {
+        viewModelScope.launch {
+            // Logic for badges
+            if (totalPoints >= 251) {
+                userRepo.addBadge(uid, "Archivist")
+            } else if (totalPoints >= 101) {
+                userRepo.addBadge(uid, "Curator")
+            } else {
+                userRepo.addBadge(uid, "Explorer")
+            }
         }
     }
 
@@ -137,6 +160,34 @@ class UserViewModel(
         _userProfile.value = null
         _visitedArtworks.value = emptyList()
         _userState.value = UserState.Idle
+    }
+
+    // Pass through methods for profile editing
+    fun updateProfile(displayName: String, email: String, avatarUrl: String) {
+        val currentProfile = _userProfile.value ?: return
+        _userState.value = UserState.Loading
+        viewModelScope.launch {
+            if (email != currentProfile.email) {
+                authRepo.updateEmail(email)
+            }
+            val updatedProfile = currentProfile.copy(displayName = displayName, email = email, profileImageUrl = avatarUrl)
+            if (userRepo.updateUserProfile(updatedProfile).isSuccess) {
+                _userProfile.value = updatedProfile
+                _userState.value = UserState.Success
+            }
+        }
+    }
+    
+    fun createInitialProfile(uid: String, email: String, displayName: String) {
+        _userState.value = UserState.Loading
+        viewModelScope.launch {
+            val profile = UserProfile(uid = uid, email = email, displayName = displayName, profileImageUrl = prebuiltAvatars.first())
+            val result = userRepo.createUserProfile(profile)
+            if (result.isSuccess) {
+                _userProfile.value = profile
+                _userState.value = UserState.Success
+            }
+        }
     }
 }
 

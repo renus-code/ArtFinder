@@ -2,6 +2,7 @@
 
 package com.humber.artfinder.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,9 +23,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -112,33 +115,42 @@ fun ProfileScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
-                        .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(16.dp))
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.secondaryContainer)
+                            ), 
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 24.dp, vertical = 12.dp)
                 ) {
-                    Icon(Icons.Default.Stars, contentDescription = null, tint = Color(0xFFFFD700))
+                    Icon(Icons.Default.Stars, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(28.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "${userProfile?.points ?: 0} Points",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
 
                 if (userProfile?.badges?.isNotEmpty() == true) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text("Achievement Badges", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Achievements", style = MaterialTheme.typography.labelLarge)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    
+                    // Display badges side by side
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        items(userProfile!!.badges) { badge ->
-                            BadgeChip(badge)
+                        userProfile!!.badges.forEach { badge ->
+                            BadgeItem(badge)
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 if (isEditing) {
                     OutlinedTextField(
@@ -272,28 +284,37 @@ fun ProfileScreen(
 }
 
 @Composable
-fun BadgeChip(badgeName: String) {
-    Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.padding(vertical = 4.dp)
+fun BadgeItem(badgeName: String) {
+    val (color, label) = when (badgeName) {
+        "Archivist" -> Color(0xFF9C27B0) to "Archivist"
+        "Curator" -> Color(0xFF2196F3) to "Curator"
+        else -> Color(0xFF4CAF50) to "Explorer"
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(80.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .background(color.copy(alpha = 0.2f), CircleShape)
+                .border(2.dp, color, CircleShape),
+            contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Stars,
                 contentDescription = null,
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = badgeName,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                tint = color,
+                modifier = Modifier.size(32.dp)
             )
         }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
     }
 }

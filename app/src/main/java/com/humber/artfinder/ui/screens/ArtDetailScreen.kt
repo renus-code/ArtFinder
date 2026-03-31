@@ -109,16 +109,18 @@ fun ArtDetailScreen(
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
     
     val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let { userVM.uploadPhoto(artworkId, it) }
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            userVM.uploadPhotos(artworkId, uris)
+        }
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && tempPhotoUri != null) {
-            userVM.uploadPhoto(artworkId, tempPhotoUri!!)
+            userVM.uploadPhotos(artworkId, listOf(tempPhotoUri!!))
         }
     }
 

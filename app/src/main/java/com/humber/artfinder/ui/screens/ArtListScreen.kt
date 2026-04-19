@@ -66,6 +66,7 @@ fun ArtListScreen(
                 value = searchQuery,
                 onValueChange = { artVM.onSearchQueryChange(it) },
                 label = { Text("Search Artworks") },
+                placeholder = { Text("Search by artwork name") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -125,9 +126,10 @@ fun ArtListScreen(
                 ) {
                     Button(
                         onClick = { artVM.loadPreviousPage() },
-                        enabled = currentPage > 1 && artState !is ArtState.Loading
+                        enabled = currentPage > 1 && artState !is ArtState.Loading,
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Previous Page")
                         Spacer(Modifier.width(8.dp))
                         Text("Prev")
                     }
@@ -140,11 +142,12 @@ fun ArtListScreen(
 
                     Button(
                         onClick = { artVM.loadNextPage() },
-                        enabled = artState is ArtState.Success && (artState as ArtState.Success).artworks.isNotEmpty() && artState !is ArtState.Loading
+                        enabled = artState is ArtState.Success && (artState as ArtState.Success).artworks.isNotEmpty() && artState !is ArtState.Loading,
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp)
                     ) {
                         Text("Next")
                         Spacer(Modifier.width(8.dp))
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next Page")
                     }
                 }
             }
@@ -160,7 +163,7 @@ fun ArtworkListItem(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 100.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(

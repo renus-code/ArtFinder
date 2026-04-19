@@ -122,8 +122,9 @@ fun ProfileScreen(
                             shape = RoundedCornerShape(16.dp)
                         )
                         .padding(horizontal = 24.dp, vertical = 12.dp)
+                        .defaultMinSize(minHeight = 48.dp)
                 ) {
-                    Icon(Icons.Default.Stars, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.Stars, contentDescription = "Points Icon", tint = Color(0xFFFFD700), modifier = Modifier.size(28.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "${userProfile?.points ?: 0} Points",
@@ -183,7 +184,7 @@ fun ProfileScreen(
                             AsyncImage(
                                 model = avatarUrl,
                                 imageLoader = imageLoader,
-                                contentDescription = null,
+                                contentDescription = "Avatar option",
                                 modifier = Modifier
                                     .size(60.dp)
                                     .clip(CircleShape)
@@ -192,7 +193,7 @@ fun ProfileScreen(
                                         color = if (selectedAvatar == avatarUrl) MaterialTheme.colorScheme.primary else Color.LightGray,
                                         shape = CircleShape
                                     )
-                                    .clickable { selectedAvatar = avatarUrl },
+                                    .clickable(onClickLabel = "Select this avatar") { selectedAvatar = avatarUrl },
                                 contentScale = ContentScale.Crop
                             )
                         }
@@ -253,9 +254,9 @@ fun ProfileScreen(
 
                     OutlinedButton(
                         onClick = onNavigateToVisitedList,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp)
                     ) {
-                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = "List Icon")
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("View Visited Artworks")
                     }
@@ -304,7 +305,7 @@ fun BadgeItem(badgeName: String) {
         ) {
             Icon(
                 imageVector = Icons.Default.Stars,
-                contentDescription = null,
+                contentDescription = "$label Badge",
                 tint = color,
                 modifier = Modifier.size(32.dp)
             )

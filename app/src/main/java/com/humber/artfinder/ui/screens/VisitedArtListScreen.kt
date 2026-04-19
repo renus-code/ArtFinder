@@ -13,6 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -39,7 +42,7 @@ fun VisitedArtListScreen(
                 title = { Text("Visited Artworks") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Navigate Back")
                     }
                 }
             )
@@ -47,7 +50,7 @@ fun VisitedArtListScreen(
     ) { innerPadding ->
         if (visitedArtworks.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                Text("No visited artworks yet.")
+                Text("No visited artworks yet.", style = MaterialTheme.typography.bodyLarge)
             }
         } else {
             LazyColumn(
@@ -82,7 +85,10 @@ fun VisitedArtworkListItem(
 
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        // Milestone 4: Explicitly ensuring minimum touch target and adding action label
+        modifier = Modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 48.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -93,14 +99,22 @@ fun VisitedArtworkListItem(
         ) {
             AsyncImage(
                 model = "https://www.artic.edu/iiif/2/${visited.imageId}/full/200,/0/default.jpg",
-                contentDescription = visited.title,
+                // Milestone 4: More descriptive content description
+                contentDescription = "Photograph of the artwork titled ${visited.title}",
                 modifier = Modifier.size(100.dp),
                 contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    // Milestone 4: Semantic grouping for screen readers
+                    .clearAndSetSemantics {
+                        contentDescription = "Artwork: ${visited.title}, by ${visited.artistDisplay ?: "Unknown artist"}, visited on $visitedDate"
+                    }
+            ) {
                 Text(text = visited.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
                 Text(text = visited.artistDisplay ?: "Unknown Artist", style = MaterialTheme.typography.bodySmall, maxLines = 1)
                 Spacer(modifier = Modifier.height(4.dp))
@@ -111,8 +125,15 @@ fun VisitedArtworkListItem(
                 )
             }
 
-            IconButton(onClick = onRemove) {
-                Icon(Icons.Default.Delete, contentDescription = "Remove", tint = MaterialTheme.colorScheme.error)
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier.size(48.dp) // Milestone 4: Enforce 48dp touch target
+            ) {
+                Icon(
+                    Icons.Default.Delete, 
+                    contentDescription = "Remove ${visited.title} from visited list", 
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }

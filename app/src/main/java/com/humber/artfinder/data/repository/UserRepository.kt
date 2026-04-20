@@ -20,6 +20,7 @@ class UserRepository(
             usersCollection.document(profile.uid).set(profile).await()
             Result.success(Unit)
         } catch (e: Exception) {
+            e.printStackTrace() // This will show up in Logcat regardless of result
             Result.failure(e)
         }
     }
@@ -30,6 +31,7 @@ class UserRepository(
             val profile = snapshot.toObject(UserProfile::class.java)
             Result.success(profile)
         } catch (e: Exception) {
+            e.printStackTrace() // This will show up in Logcat regardless of result
             Result.failure(e)
         }
     }
@@ -39,6 +41,7 @@ class UserRepository(
             usersCollection.document(profile.uid).set(profile).await()
             Result.success(Unit)
         } catch (e: Exception) {
+            e.printStackTrace() // This will show up in Logcat regardless of result
             Result.failure(e)
         }
     }
@@ -54,6 +57,7 @@ class UserRepository(
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
+            e.printStackTrace() // This will show up in Logcat regardless of result
             Result.failure(e)
         }
     }
@@ -68,6 +72,7 @@ class UserRepository(
             val artworks = snapshot.toObjects(VisitedArtwork::class.java)
             Result.success(artworks)
         } catch (e: Exception) {
+            e.printStackTrace() // This will show up in Logcat regardless of result
             Result.failure(e)
         }
     }
@@ -81,6 +86,7 @@ class UserRepository(
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
+            e.printStackTrace() // This will show up in Logcat regardless of result
             Result.failure(e)
         }
     }
@@ -107,6 +113,7 @@ class UserRepository(
             
             Result.success(downloadUrl)
         } catch (e: Exception) {
+            e.printStackTrace() // This will show up in Logcat regardless of result
             Result.failure(e)
         }
     }
@@ -121,6 +128,7 @@ class UserRepository(
             userRef.update("points", newPoints).await()
             Result.success(newPoints)
         } catch (e: Exception) {
+            e.printStackTrace() // This will show up in Logcat regardless of result
             Result.failure(e)
         }
     }
@@ -136,6 +144,7 @@ class UserRepository(
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            e.printStackTrace() // This will show up in Logcat regardless of result
             Result.failure(e)
         }
     }

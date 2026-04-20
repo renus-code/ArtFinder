@@ -103,13 +103,29 @@ class UserViewModel(
     }
 
     fun uploadPhotos(artworkId: Int, imageUris: List<Uri>) {
-        val uid = authRepo.currentUser?.uid ?: return
+        val currentUser = authRepo.currentUser
+        if (currentUser == null) {
+            android.util.Log.e("ART_FINDER_DEBUG", "UPLOAD FAILED: No user is logged in!")
+            _userState.value = UserState.Error("You must be logged in to upload photos.")
+            return
+        }
+        
+        val uid = currentUser.uid
+        android.util.Log.i("ART_FINDER_DEBUG", "!!! UPLOAD STARTED !!! User: $uid, Artwork: $artworkId, Count: ${imageUris.size}")
+        
         _userState.value = UserState.Loading
         viewModelScope.launch {
             var successCount = 0
-            imageUris.forEach { uri ->
-                if (userRepo.uploadArtworkPhoto(uid, artworkId, uri).isSuccess) {
+            imageUris.forEachIndexed { index, uri ->
+                android.util.Log.d("ART_FINDER_DEBUG", "Uploading photo ${index + 1}/${imageUris.size}: $uri")
+                val result = userRepo.uploadArtworkPhoto(uid, artworkId, uri)
+                if (result.isSuccess) {
                     successCount++
+                    android.util.Log.i("ART_FINDER_DEBUG", "Photo ${index + 1} upload SUCCESS")
+                } else {
+                    val error = result.exceptionOrNull()
+                    android.util.Log.e("ART_FINDER_DEBUG", "Photo ${index + 1} upload FAILED: ${error?.message}")
+                    error?.printStackTrace()
                 }
             }
 

@@ -66,9 +66,11 @@ fun ArtDetailScreen(
     } else null
 
     var visitedArtworkInfo by remember { mutableStateOf<VisitedArtwork?>(null) }
+    val isVisited = userVM.isVisited(artworkId)
     
     LaunchedEffect(userVM.visitedArtworks.value) {
         visitedArtworkInfo = userVM.getVisitedArtworkById(artworkId)
+        android.util.Log.d("ART_FINDER_DEBUG", "Detail Screen loaded for artwork $artworkId. isVisited: $isVisited")
     }
 
     if (artwork == null && visitedArtworkInfo != null) {
@@ -94,8 +96,6 @@ fun ArtDetailScreen(
         )
     }
 
-    val isVisited = userVM.isVisited(artworkId)
-
     // Permissions for Camera and Location
     val permissionsState = rememberMultiplePermissionsState(
         listOf(
@@ -112,6 +112,7 @@ fun ArtDetailScreen(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri> ->
         if (uris.isNotEmpty()) {
+            android.util.Log.d("ART_FINDER_DEBUG", "Gallery Result: ${uris.size} URIs")
             userVM.uploadPhotos(artworkId, uris)
         }
     }
@@ -119,8 +120,11 @@ fun ArtDetailScreen(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
+        android.util.Log.d("ART_FINDER_DEBUG", "Camera Result: success=$success, uri=$tempPhotoUri")
         if (success && tempPhotoUri != null) {
             userVM.uploadPhotos(artworkId, listOf(tempPhotoUri!!))
+        } else if (!success) {
+            android.util.Log.e("ART_FINDER_DEBUG", "Camera Capture Cancelled or Failed")
         }
     }
 
@@ -182,11 +186,14 @@ fun ArtDetailScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
                                 onClick = { 
+                                    android.util.Log.d("ART_FINDER_DEBUG", "Camera Button Clicked")
                                     if (permissionsState.permissions.find { it.permission == Manifest.permission.CAMERA }?.status?.isGranted == true) {
                                         val uri = createTempPictureUri(context)
                                         tempPhotoUri = uri
+                                        android.util.Log.d("ART_FINDER_DEBUG", "Launching Camera with URI: $uri")
                                         cameraLauncher.launch(uri)
                                     } else {
+                                        android.util.Log.d("ART_FINDER_DEBUG", "Requesting Camera Permissions")
                                         permissionsState.launchMultiplePermissionRequest()
                                     }
                                 },
@@ -198,7 +205,10 @@ fun ArtDetailScreen(
                             }
                             
                             OutlinedButton(
-                                onClick = { galleryLauncher.launch("image/*") },
+                                onClick = { 
+                                    android.util.Log.d("ART_FINDER_DEBUG", "Gallery Button Clicked")
+                                    galleryLauncher.launch("image/*") 
+                                },
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Icon(Icons.Default.PhotoLibrary, contentDescription = null)
